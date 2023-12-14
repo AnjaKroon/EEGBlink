@@ -13,3 +13,23 @@
 
 # Output:
 # Clean versions of 2 EEG recordings
+
+import scipy.io
+import pandas as pd
+import numpy as np
+import mne
+import matplotlib.pyplot as plt
+
+x = 2
+print(x)
+
+
+# import data
+
+mat = scipy.io.loadmat('drive/MyDrive/ED/Training_EEG.mat')
+blinks= mat["blinks"]
+data= mat["train_eeg"]
+
+print(mat.keys())
+
+
