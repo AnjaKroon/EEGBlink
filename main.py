@@ -23,10 +23,6 @@ def plot_blinks(blinks):
   plt.xlabel('Blink instances')
   plt.show()
 
-def remove_blinks(data, when_blink):
-  clean = data
-  return clean
-
 def plot_EEG(data):
   sfreq = 400
   info = mne.create_info(ch_names=['EEG 1', 'EEG 2', 'EEG 3', 'EEG 4', 'EEG 5',
@@ -37,7 +33,7 @@ def plot_EEG(data):
   mne.viz.plot_raw(raw, duration=25.0, start=0.0, scalings=100, n_channels=19)
   plt.show()
 
-def short_stationary_frame_length(data):
+def divide_into_frames(data):
   def autocorrelation(signal):
     auto_corr = np.correlate(signal, signal, mode='full')
     return auto_corr[len(auto_corr)//2:]
@@ -50,8 +46,8 @@ def short_stationary_frame_length(data):
     plt.show()
 
   channels, data_length = data.shape
-  frame_length = 300           
-  amt_overlap_frames = 200
+  frame_length = 30        # data_length   
+  amt_overlap_frames = 0
   shift_param = frame_length - amt_overlap_frames             # how many points before start of next frame
   last_frame_start = data_length - frame_length               # starting point of last frame
   amount_frames = math.floor(((last_frame_start) / (shift_param))) + 1
@@ -69,15 +65,15 @@ def short_stationary_frame_length(data):
         end_idx = start_idx + frame_length
         result_matrix[j, :, i] = data[i, start_idx:end_idx]
 
-  # print("Data Matrix Shape:", data.shape)
-  # print("Result Matrix Shape:", result_matrix.shape)    # rows, columns, channels
+  print("Data Matrix Shape:", data.shape)
+  print("Result Matrix Shape:", result_matrix.shape)    # rows, columns, channels
   
   # compute the autocorrelation over the frame length of 300
   # testing computation of the autocorrelation matrix
-  # ac = autocorrelation(result_matrix[0, :, 0])
-  # plot_autocorr(ac)
-  # ac_ = autocorrelation(result_matrix[4, :, 0])
-  # plot_autocorr(ac_)
+  ac = autocorrelation(result_matrix[19, :, 0])
+  plot_autocorr(ac)
+  ac_ = autocorrelation(result_matrix[20, :, 0])
+  plot_autocorr(ac_)
   # TODO: The autocorrelation is not showing SMALL SENSE STATIONARY properties
   # could probably just assume small sense stationary but I don't want to do that
   # Perhaps it is because the blink is throwing it off? Or is there additional noise?
@@ -85,16 +81,23 @@ def short_stationary_frame_length(data):
         
   return result_matrix
 
+def remove_blinks(data, blinks):
+  # calculating H for each frame within each channel and applying it to produce a matrix of the same dimensions
+  # blinks will not be in the correct form factor -- make zeros matrix and frame-ify it, any extras fill with zero
+  
+  clean = data
+  return clean
+
 def main():
   data, blinks = load_data()
-  short_stationary_frame_length(data)
+  data_in_frames = divide_into_frames(data)
+  
   plot_blinks(blinks)
   plot_EEG(data)
-
-  # calculating H for each frame within each channel and applying it to produce a matrix of the same dimensions
   
-  clean = remove_blinks(data, blinks)
-  plot_EEG(clean)
+  clean = remove_blinks(data_in_frames, blinks)
+
+  # plot_EEG(clean)
 
 if __name__ == "__main__":
   main()
